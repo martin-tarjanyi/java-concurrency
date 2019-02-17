@@ -3,11 +3,14 @@ package org.learning.javaconcurrency.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 public class JsonService {
 
 	private static final Logger LOG = LoggerFactory.getLogger(JsonService.class);
 	private static final RestTemplate restTemplate = new RestTemplate();
+	private static final WebClient WEB_CLIENT = WebClient.create();
 	private static final String USER_API = "https://jsonplaceholder.typicode.com/users";
 	//JSON Place Holder
 //	private static final String POSTS_API = "https://jsonplaceholder.typicode.com/posts";
@@ -47,7 +50,7 @@ public class JsonService {
 
 		return result;
 	}
-	
+
 	public static String getComments() {
 
 		long startTime = System.currentTimeMillis();
@@ -75,7 +78,7 @@ public class JsonService {
 
 		return result;
 	}
-	
+
 	public static String getPhotos() {
 
 		long startTime = System.currentTimeMillis();
@@ -90,4 +93,43 @@ public class JsonService {
 		return result;
 	}
 
+	public static Mono<String> getUsersReactive() {
+
+		return callApiReactive(USER_API, "Time Taken for JSON Service getUsers :: ");
+	}
+
+	public static Mono<String> getCommentsReactive() {
+
+		return callApiReactive(COMMENTS_API, "Time Taken for JSON Service getComments :: ");
+	}
+
+	public static Mono<String> getPostsReactive() {
+
+		return callApiReactive(POSTS_API, "Time Taken for JSON Service getPosts :: ");
+	}
+
+	public static Mono<String> getAlbumsReactive() {
+
+		return callApiReactive(ALBUMS_API, "Time Taken for JSON Service getAlbums :: ");
+	}
+
+	public static Mono<String> getPhotosReactive() {
+
+		return callApiReactive(PHOTOS_API, "Time Taken for JSON Service getPhotos :: ");
+	}
+
+
+	private static Mono<String> callApiReactive(String commentsApi, String s)
+	{
+		return WEB_CLIENT.get()
+						 .uri(commentsApi)
+						 .retrieve()
+						 .bodyToMono(String.class)
+						 .elapsed()
+						 .doOnNext(
+								 tuple -> LOG.info(
+										 s + tuple.getT1() + " - in Thread "
+												 + Thread.currentThread().getName()))
+						 .flatMap(tuple -> Mono.just(tuple.getT2()));
+	}
 }
